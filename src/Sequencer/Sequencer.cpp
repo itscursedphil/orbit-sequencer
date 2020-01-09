@@ -8,6 +8,8 @@ Sequencer::Sequencer()
     _pattern[i] = 0;
   }
 
+  _pattern[0] = 1;
+
   _mode = 0;
   _length = 16;
   _steps = 1;
@@ -129,16 +131,27 @@ int Sequencer::getOffset()
 int Sequencer::setOffset(int offset)
 {
   _offset = offset;
+
+  euclidian();
 }
 
 void Sequencer::incOffset()
 {
-  _offset = (_offset + 1) % 16;
+  _offset = (_offset + 1) % _length;
+
+  euclidian();
 }
 
 void Sequencer::decOffset()
 {
-  _offset = (_offset + 16 - 1) % 16;
+  _offset = (_offset + _length - 1) % _length;
+
+  euclidian();
+}
+
+int Sequencer::getOffsetIndex(int index)
+{
+  return (index + _offset) % _length;
 }
 
 void Sequencer::euclidian()
@@ -154,15 +167,16 @@ void Sequencer::euclidian()
   {
     for (int i = 0; i < _length; i++)
     {
+      int index = getOffsetIndex(i);
       int val = (_steps * 1.0) / (_length * 1.0) * i;
 
       if (val == previous)
       {
-        _pattern[i] = 0;
+        _pattern[index] = 0;
       }
       else
       {
-        _pattern[i] = 1;
+        _pattern[index] = 1;
       }
 
       previous = val;
@@ -170,6 +184,7 @@ void Sequencer::euclidian()
   }
   else if (_steps == 1)
   {
-    _pattern[0] = 1;
+    int index = getOffsetIndex(0);
+    _pattern[index] = 1;
   }
 }

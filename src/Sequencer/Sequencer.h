@@ -23,6 +23,7 @@ public:
   int setOffset(int offset);
   void incOffset();
   void decOffset();
+  int getOffsetIndex(int index);
   void euclidian();
 
 private:
