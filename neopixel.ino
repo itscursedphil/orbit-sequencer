@@ -1,7 +1,10 @@
+#include <TimerOne.h>
 #include <Adafruit_NeoPixel.h>
 #include "src/Encoder/Encoder.h"
 #include "src/Button/Button.h"
 #include "src/Sequencer/Sequencer.h"
+
+int timer = 0;
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(16, 22, NEO_GRB + NEO_KHZ800);
 
@@ -11,6 +14,8 @@ uint32_t cRed = pixels.Color(255, 0, 0);
 uint32_t cRedDark = pixels.Color(20, 0, 0);
 uint32_t cGreen = pixels.Color(0, 255, 0);
 uint32_t cGreenDark = pixels.Color(0, 20, 0);
+uint32_t cActiveStep = pixels.Color(255, 255, 255);
+uint32_t cInactiveStep = pixels.Color(55, 55, 55);
 uint32_t cDark = pixels.Color(0, 0, 0);
 
 uint32_t channelColors[3] = {cBlue, cRed, cGreen};
@@ -42,10 +47,11 @@ void switchChannel()
 
 void setup()
 {
+  Timer1.initialize(62500);
+  Timer1.attachInterrupt(clock);
+
   pixels.begin();
   pixels.setBrightness(20);
-
-  Serial.begin(9600);
 }
 
 void loop()
@@ -103,13 +109,28 @@ void loop()
   pixels.clear();
   for (int i = 0; i < length; i++)
   {
+
     if (pattern[i] == 1)
     {
-      pixels.setPixelColor(15 - i, channelColor);
+      if (i == timer / 2)
+      {
+        pixels.setPixelColor(15 - i, cActiveStep);
+      }
+      else
+      {
+        pixels.setPixelColor(15 - i, channelColor);
+      }
     }
     else
     {
-      pixels.setPixelColor(15 - i, channelColorDark);
+      if (i == timer / 2)
+      {
+        pixels.setPixelColor(15 - i, cInactiveStep);
+      }
+      else
+      {
+        pixels.setPixelColor(15 - i, channelColorDark);
+      }
     }
   }
   pixels.show();
@@ -118,4 +139,9 @@ void loop()
   {
     lastButtonValues[i] = buttonValues[i];
   }
+}
+
+void clock()
+{
+  timer = (timer + 1) % 32;
 }
