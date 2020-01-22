@@ -14,8 +14,10 @@ Sequencer::Sequencer()
   _length = 16;
   _steps = 1;
   _offset = 0;
+  _masterTimer = 0;
+  _timer = 0;
 
-  euclidian();
+  generateEuclidian();
 }
 
 int *Sequencer::getPattern()
@@ -56,7 +58,7 @@ int Sequencer::setLength(int length)
 
   if (_mode == 0)
   {
-    euclidian();
+    generateEuclidian();
   }
 }
 
@@ -65,10 +67,12 @@ void Sequencer::incLength()
   if (_length < 16)
   {
     _length = _length + 1;
+    // Sync with master clock
+    _timer = _masterTimer % (_length * 32); // n Steps (Pattern length) * 16 Ratchets * 2 (Gate on/off)
 
     if (_mode == 0)
     {
-      euclidian();
+      generateEuclidian();
     }
   }
 }
@@ -78,6 +82,8 @@ void Sequencer::decLength()
   if (_length > 1)
   {
     _length = _length - 1;
+    // Sync with master clock
+    _timer = _masterTimer % (_length * 32); // n Steps (Pattern length * 16 Ratchets * 2 (Gate on/off)
 
     if (_steps > _length)
     {
@@ -86,7 +92,7 @@ void Sequencer::decLength()
 
     if (_mode == 0)
     {
-      euclidian();
+      generateEuclidian();
     }
   }
 }
@@ -100,7 +106,7 @@ int Sequencer::setSteps(int steps)
 {
   _steps = steps;
 
-  euclidian();
+  generateEuclidian();
 }
 
 void Sequencer::incSteps()
@@ -109,7 +115,7 @@ void Sequencer::incSteps()
   {
     _steps = _steps + 1;
 
-    euclidian();
+    generateEuclidian();
   }
 }
 
@@ -119,7 +125,7 @@ void Sequencer::decSteps()
   {
     _steps = _steps - 1;
 
-    euclidian();
+    generateEuclidian();
   }
 }
 
@@ -132,21 +138,21 @@ int Sequencer::setOffset(int offset)
 {
   _offset = offset;
 
-  euclidian();
+  generateEuclidian();
 }
 
 void Sequencer::incOffset()
 {
   _offset = (_offset + 1) % _length;
 
-  euclidian();
+  generateEuclidian();
 }
 
 void Sequencer::decOffset()
 {
   _offset = (_offset + _length - 1) % _length;
 
-  euclidian();
+  generateEuclidian();
 }
 
 int Sequencer::getOffsetIndex(int index)
@@ -154,7 +160,18 @@ int Sequencer::getOffsetIndex(int index)
   return (index + _offset) % _length;
 }
 
-void Sequencer::euclidian()
+void Sequencer::incTimer()
+{
+  _masterTimer = (_masterTimer + 1) % 512; // 16 Steps * 16 Ratchets * 2 (Gate on/off)
+  _timer = (_timer + 1) % (_length * 32);  // n Steps (Pattern length) * 16 Ratchets * 2 (Gate on/off)
+}
+
+int Sequencer::getTimer()
+{
+  return _timer;
+}
+
+void Sequencer::generateEuclidian()
 {
   for (int i = 0; i < 16; i++)
   {
