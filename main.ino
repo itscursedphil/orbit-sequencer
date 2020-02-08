@@ -20,26 +20,31 @@ uint32_t channelColors[3] = {cBlue, cRed, cGreen};
 uint32_t channelColorsDark[3] = {cBlueDark, cRedDark, cGreenDark};
 
 // BUTTONS
-// Encoder Button, Channel Button, Mode Button
-const int buttonsLength = 4;
-Button buttons[buttonsLength] = {Button(24), Button(28), Button(29), Button(30)};
-int buttonValues[buttonsLength] = {0, 0, 0, 0};
-int lastButtonValues[buttonsLength] = {0, 0, 0, 0};
+// Encoder Button, Channel Button, Mode Button, Shift Button, Clock Button
+const int buttonsLength = 5;
+Button buttons[buttonsLength] = {Button(24), Button(28), Button(29), Button(30), Button(31)};
+int buttonValues[buttonsLength] = {0, 0, 0, 0, 0};
+int lastButtonValues[buttonsLength] = {0, 0, 0, 0, 0};
 
 int encoderButtonIndex = 0;
 int channelButtonIndex = 1;
 int modeButtonIndex = 2;
 int shiftButtonIndex = 3;
+int clockButtonIndex = 4;
 
 // ENCODER
 Encoder encoder = Encoder(26, 27);
 int encoderValue = 0;
 
+// SEQUENCERS
 const int channelsLength = 3;
 int activeChannel = 0;
 
 Sequencer sequencers[channelsLength] = {Sequencer(), Sequencer(), Sequencer()};
 int outputStates[channelsLength] = {0, 0, 0};
+
+// CLOCK
+int tempo = 128;
 
 long bpmToTimerInterval(int bpm)
 {
@@ -48,9 +53,33 @@ long bpmToTimerInterval(int bpm)
   return 1L * microseconds;
 }
 
+void setTempo()
+{
+  long clockInterval = bpmToTimerInterval(tempo);
+  Timer1.setPeriod(clockInterval);
+}
+
+void incTempo()
+{
+  if (tempo > 40)
+  {
+    tempo = tempo - 1;
+    setTempo();
+  }
+}
+
+void decTempo()
+{
+  if (tempo < 512)
+  {
+    tempo = tempo + 1;
+    setTempo();
+  }
+}
+
 void setup()
 {
-  long clockInterval = bpmToTimerInterval(128);
+  long clockInterval = bpmToTimerInterval(tempo);
 
   Timer1.initialize(clockInterval);
   Timer1.attachInterrupt(clock);
@@ -99,7 +128,11 @@ void handleEncoder()
 {
   if (encoderValue > 0)
   {
-    if (buttonValues[shiftButtonIndex] == 1)
+    if (buttonValues[clockButtonIndex] == 1)
+    {
+      incTempo();
+    }
+    else if (buttonValues[shiftButtonIndex] == 1)
     {
       sequencers[activeChannel].incOffset();
     }
@@ -114,7 +147,11 @@ void handleEncoder()
   }
   else if (encoderValue < 0)
   {
-    if (buttonValues[shiftButtonIndex] == 1)
+    if (buttonValues[clockButtonIndex] == 1)
+    {
+      decTempo();
+    }
+    else if (buttonValues[shiftButtonIndex] == 1)
     {
       sequencers[activeChannel].decOffset();
     }
