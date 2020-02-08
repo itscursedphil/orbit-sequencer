@@ -41,9 +41,18 @@ int activeChannel = 0;
 Sequencer sequencers[channelsLength] = {Sequencer(), Sequencer(), Sequencer()};
 int outputStates[channelsLength] = {0, 0, 0};
 
+long bpmToTimerInterval(int bpm)
+{
+  // 60 seconds / beats per minute * 1000000 microseconds / 4 beats / (4 ratchets * 2 gate states)
+  float microseconds = 31250.0 * (60.0 / bpm);
+  return 1L * microseconds;
+}
+
 void setup()
 {
-  Timer1.initialize(16000);
+  long clockInterval = bpmToTimerInterval(128);
+
+  Timer1.initialize(clockInterval);
   Timer1.attachInterrupt(clock);
 
   pixels.begin();
