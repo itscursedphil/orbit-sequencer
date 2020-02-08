@@ -7,11 +7,11 @@
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(16, 22, NEO_GRB + NEO_KHZ800);
 
 uint32_t cBlue = pixels.Color(0, 0, 255);
-uint32_t cBlueDark = pixels.Color(0, 0, 20);
+uint32_t cBlueDark = pixels.Color(0, 0, 15);
 uint32_t cRed = pixels.Color(255, 0, 0);
-uint32_t cRedDark = pixels.Color(20, 0, 0);
+uint32_t cRedDark = pixels.Color(15, 0, 0);
 uint32_t cGreen = pixels.Color(0, 255, 0);
-uint32_t cGreenDark = pixels.Color(0, 20, 0);
+uint32_t cGreenDark = pixels.Color(0, 15, 0);
 uint32_t cActiveStep = pixels.Color(255, 255, 255);
 uint32_t cInactiveStep = pixels.Color(55, 55, 55);
 uint32_t cDark = pixels.Color(0, 0, 0);
@@ -37,6 +37,7 @@ const int channelsLength = 3;
 int activeChannel = 0;
 
 Sequencer sequencers[channelsLength] = {Sequencer(), Sequencer(), Sequencer()};
+int outputStates[channelsLength] = {0, 0, 0};
 
 void switchChannel()
 {
@@ -45,7 +46,7 @@ void switchChannel()
 
 void setup()
 {
-  Timer1.initialize(2500);
+  Timer1.initialize(8000);
   Timer1.attachInterrupt(clock);
 
   pixels.begin();
@@ -108,6 +109,27 @@ void loop()
     int timer = sequencers[channel].getTimer();
     int *pattern = sequencers[channel].getPattern();
 
+    // Handle pattern audio trigger
+    if (channel == 0)
+    {
+      int currentStepIndex = timer / 32;
+
+      bool isStepActive = pattern[currentStepIndex] == 1;
+      bool isGateHigh = timer % 32 < 16;
+
+      if (isStepActive && isGateHigh)
+      {
+        digitalWrite(32, HIGH);
+        pixels.setPixelColor(15 - currentStepIndex, cActiveStep);
+      }
+      else
+      {
+        digitalWrite(32, LOW);
+        pixels.setPixelColor(15 - currentStepIndex, cDark);
+      }
+    }
+
+    // Handle pattern LEDs
     if (channel == activeChannel)
     {
       uint32_t channelColor = channelColors[channel];
