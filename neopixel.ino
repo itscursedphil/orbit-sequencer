@@ -19,6 +19,7 @@ uint32_t cDark = pixels.Color(0, 0, 0);
 uint32_t channelColors[3] = {cBlue, cRed, cGreen};
 uint32_t channelColorsDark[3] = {cBlueDark, cRedDark, cGreenDark};
 
+// BUTTONS
 // Encoder Button, Channel Button, Mode Button
 const int buttonsLength = 4;
 Button buttons[buttonsLength] = {Button(24), Button(28), Button(29), Button(30)};
@@ -30,19 +31,15 @@ int channelButtonIndex = 1;
 int modeButtonIndex = 2;
 int shiftButtonIndex = 3;
 
+// ENCODER
 Encoder encoder = Encoder(26, 27);
-int count = 0;
+int encoderValue = 0;
 
 const int channelsLength = 3;
 int activeChannel = 0;
 
 Sequencer sequencers[channelsLength] = {Sequencer(), Sequencer(), Sequencer()};
 int outputStates[channelsLength] = {0, 0, 0};
-
-void switchChannel()
-{
-  activeChannel = (activeChannel + 1) % channelsLength;
-}
 
 void setup()
 {
@@ -55,22 +52,42 @@ void setup()
   pinMode(32, OUTPUT);
 }
 
-void loop()
+void switchChannel()
 {
-  // Read button values
+  activeChannel = (activeChannel + 1) % channelsLength;
+}
+
+void readButtonValues()
+{
   for (int i = 0; i < buttonsLength; i++)
   {
     buttonValues[i] = buttons[i].read();
   }
+}
 
+void handleButtonStates()
+{
   if (buttonValues[channelButtonIndex] == 1 && lastButtonValues[channelButtonIndex] == 0)
   {
     switchChannel();
   }
+}
 
-  // Handle encoder
-  int encoderValue = encoder.read();
+void cacheButtonValues()
+{
+  for (int i = 0; i < buttonsLength; i++)
+  {
+    lastButtonValues[i] = buttonValues[i];
+  }
+}
 
+void readEncoderValue()
+{
+  encoderValue = encoder.read();
+}
+
+void handleEncoder()
+{
   if (encoderValue > 0)
   {
     if (buttonValues[shiftButtonIndex] == 1)
@@ -101,8 +118,10 @@ void loop()
       sequencers[activeChannel].decSteps();
     }
   }
+}
 
-  // Handle patterns
+void handleSequencerPatterns()
+{
   for (int channel = 0; channel < channelsLength; channel++)
   {
     int length = sequencers[channel].getLength();
@@ -120,12 +139,10 @@ void loop()
       if (isStepActive && isGateHigh)
       {
         digitalWrite(32, HIGH);
-        pixels.setPixelColor(15 - currentStepIndex, cActiveStep);
       }
       else
       {
         digitalWrite(32, LOW);
-        pixels.setPixelColor(15 - currentStepIndex, cDark);
       }
     }
 
@@ -159,12 +176,18 @@ void loop()
       pixels.show();
     }
   }
+}
 
-  // Cache values
-  for (int i = 0; i < buttonsLength; i++)
-  {
-    lastButtonValues[i] = buttonValues[i];
-  }
+void loop()
+{
+  readButtonValues();
+  readEncoderValue();
+
+  handleButtonStates();
+  handleEncoder();
+  handleSequencerPatterns();
+
+  cacheButtonValues();
 }
 
 void clock()
