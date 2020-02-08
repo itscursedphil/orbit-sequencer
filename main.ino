@@ -43,7 +43,7 @@ int outputStates[channelsLength] = {0, 0, 0};
 
 void setup()
 {
-  Timer1.initialize(8000);
+  Timer1.initialize(16000);
   Timer1.attachInterrupt(clock);
 
   pixels.begin();
@@ -131,10 +131,10 @@ void handleSequencerPatterns()
     // Handle pattern audio trigger
     if (channel == 0)
     {
-      int currentStepIndex = timer / 32;
+      int currentStepIndex = timer / 8;
 
       bool isStepActive = pattern[currentStepIndex] == 1;
-      bool isGateHigh = timer % 32 < 16;
+      bool isGateHigh = timer % 8 < 4;
 
       if (isStepActive && isGateHigh)
       {
@@ -160,14 +160,14 @@ void handleSequencerPatterns()
         if (pattern[i] == 1)
         {
           // If timer value equals step index
-          if (i == timer / 32) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
+          if (i == timer / 8) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
             pixels.setPixelColor(15 - i, cActiveStep);
           else
             pixels.setPixelColor(15 - i, channelColor);
         }
         else
         {
-          if (i == timer / 32) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
+          if (i == timer / 8) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
             pixels.setPixelColor(15 - i, cInactiveStep);
           else
             pixels.setPixelColor(15 - i, channelColorDark);

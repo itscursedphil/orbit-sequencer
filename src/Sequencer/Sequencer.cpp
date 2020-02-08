@@ -68,7 +68,7 @@ void Sequencer::incLength()
   {
     _length = _length + 1;
     // Sync with master clock
-    _timer = _masterTimer % (_length * 32); // n Steps (Pattern length) * 16 Ratchets * 2 (Gate on/off)
+    _timer = _masterTimer % (_length * 8); // n Steps (Pattern length) * 4 Ratchets * 2 (Gate on/off)
 
     if (_mode == 0)
     {
@@ -83,7 +83,7 @@ void Sequencer::decLength()
   {
     _length = _length - 1;
     // Sync with master clock
-    _timer = _masterTimer % (_length * 32); // n Steps (Pattern length * 16 Ratchets * 2 (Gate on/off)
+    _timer = _masterTimer % (_length * 8); // n Steps (Pattern length * 4 Ratchets * 2 (Gate on/off)
 
     if (_steps > _length)
     {
@@ -162,8 +162,8 @@ int Sequencer::getOffsetIndex(int index)
 
 void Sequencer::incTimer()
 {
-  _masterTimer = (_masterTimer + 1) % 512; // 16 Steps * 16 Ratchets * 2 (Gate on/off)
-  _timer = (_timer + 1) % (_length * 32);  // n Steps (Pattern length) * 16 Ratchets * 2 (Gate on/off)
+  _masterTimer = (_masterTimer + 1) % 128; // 16 Steps * 4 Ratchets * 2 (Gate on/off)
+  _timer = (_timer + 1) % (_length * 8);   // n Steps (Pattern length) * 4 Ratchets * 2 (Gate on/off)
 }
 
 int Sequencer::getTimer()
