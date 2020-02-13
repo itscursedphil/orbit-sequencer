@@ -35,13 +35,19 @@ int clockButtonIndex = 4;
 // ENCODER
 Encoder encoder = Encoder(26, 27);
 int encoderValue = 0;
+long lastEncoderChangeTime = 0;
 
 // SEQUENCERS
 const int channelsLength = 3;
 int activeChannel = 0;
 
+bool editModeActive = 0;
+int activeEditStep = 0;
+
 Sequencer sequencers[channelsLength] = {Sequencer(), Sequencer(), Sequencer()};
 int outputStates[channelsLength] = {0, 0, 0};
+
+unsigned long editModeThresholdTime = 2000;
 
 // CLOCK
 int tempo = 128;
@@ -88,6 +94,8 @@ void setup()
   pixels.setBrightness(20);
 
   pinMode(32, OUTPUT);
+
+  lastEncoderChangeTime = millis();
 }
 
 void switchChannel()
@@ -126,42 +134,72 @@ void readEncoderValue()
 
 void handleEncoder()
 {
-  if (encoderValue > 0)
+  int encoderButtonValue = buttonValues[encoderButtonIndex];
+  int lastEncoderButtonValue = lastButtonValues[encoderButtonIndex];
+
+  if (editModeActive == 1 && encoderButtonValue == 1 && lastEncoderButtonValue == 0)
   {
+    sequencers[activeChannel].toggleStep(activeEditStep);
+  }
+  else if (encoderValue > 0)
+  {
+    // Clock
     if (buttonValues[clockButtonIndex] == 1)
     {
       incTempo();
     }
+    // Pattern offset
     else if (buttonValues[shiftButtonIndex] == 1)
     {
       sequencers[activeChannel].incOffset();
     }
+    // Pattern length
     else if (buttonValues[encoderButtonIndex] == 1)
     {
       sequencers[activeChannel].incLength();
     }
     else
     {
-      sequencers[activeChannel].incSteps();
+      int patternLength = sequencers[activeChannel].getLength();
+
+      if (editModeActive == 1)
+      {
+        activeEditStep = (activeEditStep + 1) % patternLength;
+      }
+
+      editModeActive = 1;
+      lastEncoderChangeTime = millis();
     }
   }
   else if (encoderValue < 0)
   {
+    // Clock
     if (buttonValues[clockButtonIndex] == 1)
     {
       decTempo();
     }
+    // Pattern offset
     else if (buttonValues[shiftButtonIndex] == 1)
     {
       sequencers[activeChannel].decOffset();
     }
+    // Pattern length
     else if (buttonValues[encoderButtonIndex] == 1)
     {
       sequencers[activeChannel].decLength();
     }
+    // Pattern steps
     else
     {
-      sequencers[activeChannel].decSteps();
+      int patternLength = sequencers[activeChannel].getLength();
+
+      if (editModeActive == 1)
+      {
+        activeEditStep = (patternLength + activeEditStep - 1) % patternLength;
+      }
+
+      editModeActive = 1;
+      lastEncoderChangeTime = millis();
     }
   }
 }
@@ -202,18 +240,26 @@ void handleSequencerPatterns()
       pixels.clear();
       for (int i = 0; i < length; i++)
       {
+        if (editModeActive == 1 && i == activeEditStep && pattern[i] == 1)
+        {
+          pixels.setPixelColor(15 - i, cActiveStep);
+        }
+        else if (editModeActive == 1 && i == activeEditStep)
+        {
+          pixels.setPixelColor(15 - i, cInactiveStep);
+        }
         // If step at index in pattern is active
-        if (pattern[i] == 1)
+        else if (pattern[i] == 1)
         {
           // If timer value equals step index
-          if (i == timer / 8) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
+          if (i == timer / 8 && editModeActive == 0) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
             pixels.setPixelColor(15 - i, cActiveStep);
           else
             pixels.setPixelColor(15 - i, channelColor);
         }
         else
         {
-          if (i == timer / 8) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
+          if (i == timer / 8 && editModeActive == 0) // Step index = timer value * 16 (ratchets) * 2 (Gate on/off)
             pixels.setPixelColor(15 - i, cInactiveStep);
           else
             pixels.setPixelColor(15 - i, channelColorDark);
@@ -226,6 +272,12 @@ void handleSequencerPatterns()
 
 void loop()
 {
+  if (editModeActive == 1 && millis() - lastEncoderChangeTime > editModeThresholdTime)
+  {
+    editModeActive = 0;
+    activeEditStep = 0;
+  }
+
   readButtonValues();
   readEncoderValue();
 

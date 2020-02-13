@@ -1,7 +1,7 @@
 #include "Arduino.h"
-#include "Sequencer.h"
+#include "EuclidianSequencer.h"
 
-Sequencer::Sequencer()
+EuclidianSequencer::EuclidianSequencer()
 {
   for (int i = 0; i < 16; i++)
   {
@@ -10,6 +10,7 @@ Sequencer::Sequencer()
 
   _pattern[0] = 1;
 
+  _mode = 0;
   _length = 16;
   _steps = 1;
   _offset = 0;
@@ -19,32 +20,64 @@ Sequencer::Sequencer()
   generateEuclidian();
 }
 
-int *Sequencer::getPattern()
+int *EuclidianSequencer::getPattern()
 {
   return _pattern;
 }
 
-int Sequencer::getLength()
+int EuclidianSequencer::getMode()
+{
+  return _mode;
+}
+
+int EuclidianSequencer::setMode(int mode)
+{
+  _mode = mode;
+}
+
+void EuclidianSequencer::toggleMode()
+{
+  if (_mode == 0)
+  {
+    _mode = 1;
+  }
+  else
+  {
+    _mode = 0;
+  }
+}
+
+int EuclidianSequencer::getLength()
 {
   return _length;
 }
 
-int Sequencer::setLength(int length)
+int EuclidianSequencer::setLength(int length)
 {
   _length = length;
+
+  if (_mode == 0)
+  {
+    generateEuclidian();
+  }
 }
 
-void Sequencer::incLength()
+void EuclidianSequencer::incLength()
 {
   if (_length < 16)
   {
     _length = _length + 1;
     // Sync with master clock
     _timer = _masterTimer % (_length * 8); // n Steps (Pattern length) * 4 Ratchets * 2 (Gate on/off)
+
+    if (_mode == 0)
+    {
+      generateEuclidian();
+    }
   }
 }
 
-void Sequencer::decLength()
+void EuclidianSequencer::decLength()
 {
   if (_length > 1)
   {
@@ -56,86 +89,89 @@ void Sequencer::decLength()
     {
       _steps = _length;
     }
+
+    if (_mode == 0)
+    {
+      generateEuclidian();
+    }
   }
 }
 
-int Sequencer::getSteps()
+int EuclidianSequencer::getSteps()
 {
   return _steps;
 }
 
-int Sequencer::setSteps(int steps)
+int EuclidianSequencer::setSteps(int steps)
 {
   _steps = steps;
+
+  generateEuclidian();
 }
 
-void Sequencer::incSteps()
+void EuclidianSequencer::incSteps()
 {
   if (_steps < _length)
   {
     _steps = _steps + 1;
+
+    generateEuclidian();
   }
 }
 
-void Sequencer::decSteps()
+void EuclidianSequencer::decSteps()
 {
   if (_steps > 0)
   {
     _steps = _steps - 1;
+
+    generateEuclidian();
   }
 }
 
-void Sequencer::toggleStep(int index)
-{
-  int currentStepValue = _pattern[index];
-
-  if (currentStepValue == 0)
-  {
-    _pattern[index] = 1;
-  }
-  else
-  {
-    _pattern[index] = 0;
-  }
-}
-
-int Sequencer::getOffset()
+int EuclidianSequencer::getOffset()
 {
   return _offset;
 }
 
-int Sequencer::setOffset(int offset)
+int EuclidianSequencer::setOffset(int offset)
 {
   _offset = offset;
+
+  generateEuclidian();
 }
 
-void Sequencer::incOffset()
+void EuclidianSequencer::incOffset()
 {
   _offset = (_offset + 1) % _length;
+
+  generateEuclidian();
 }
 
-void Sequencer::decOffset()
+void EuclidianSequencer::decOffset()
 {
   _offset = (_offset + _length - 1) % _length;
+
+  generateEuclidian();
 }
 
-int Sequencer::getOffsetIndex(int index)
+int EuclidianSequencer::getOffsetIndex(int index)
 {
   return (index + _offset) % _length;
 }
 
-void Sequencer::incTimer()
+void EuclidianSequencer::incTimer()
 {
   _masterTimer = (_masterTimer + 1) % 128; // 16 Steps * 4 Ratchets * 2 (Gate on/off)
   _timer = (_timer + 1) % (_length * 8);   // n Steps (Pattern length) * 4 Ratchets * 2 (Gate on/off)
 }
 
-int Sequencer::getTimer()
+int EuclidianSequencer::getTimer()
 {
   return _timer;
 }
 
-void Sequencer::generateEuclidian()
+void EuclidianSequencer::generateEuclidian()
 {
   for (int i = 0; i < 16; i++)
   {

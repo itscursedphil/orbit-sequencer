@@ -3,10 +3,10 @@
 
 #include "Arduino.h"
 
-class Sequencer
+class EuclidianSequencer
 {
 public:
-  Sequencer();
+  EuclidianSequencer();
 
   int *getPattern();
 
@@ -26,7 +26,6 @@ public:
   int setSteps(int steps);
   void incSteps();
   void decSteps();
-  void toggleStep(int index);
 
   // OFFSET
   int getOffset();
