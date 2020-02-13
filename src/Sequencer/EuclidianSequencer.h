@@ -1,5 +1,5 @@
-#ifndef Sequencer_h
-#define Sequencer_h
+#ifndef EuclidianSequencer_h
+#define EuclidianSequencer_h
 
 #include "Arduino.h"
 

@@ -1,8 +1,6 @@
 #ifndef Sequencer_h
 #define Sequencer_h
 
-#include "Arduino.h"
-
 class Sequencer
 {
 public:

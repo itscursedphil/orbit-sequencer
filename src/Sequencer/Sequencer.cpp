@@ -111,12 +111,36 @@ int Sequencer::setOffset(int offset)
 
 void Sequencer::incOffset()
 {
-  _offset = (_offset + 1) % _length;
+  int currentPattern[16];
+
+  for (int i = 0; i < 16; i++)
+  {
+    currentPattern[i] = _pattern[i];
+  }
+
+  for (int i = 0; i < 16; i++)
+  {
+    int previousStepIndex = (i - 1 + 16) % 16;
+
+    _pattern[i] = currentPattern[previousStepIndex];
+  }
 }
 
 void Sequencer::decOffset()
 {
-  _offset = (_offset + _length - 1) % _length;
+  int currentPattern[16];
+
+  for (int i = 0; i < 16; i++)
+  {
+    currentPattern[i] = _pattern[i];
+  }
+
+  for (int i = 0; i < 16; i++)
+  {
+    int nextStepIndex = (i + 1) % 16;
+
+    _pattern[i] = currentPattern[nextStepIndex];
+  }
 }
 
 int Sequencer::getOffsetIndex(int index)
